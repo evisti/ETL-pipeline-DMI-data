@@ -1,2 +1,5 @@
 # etl-pipeline-improvements
-Description
+
+Object oriented design
+
+Code quality & best practices
