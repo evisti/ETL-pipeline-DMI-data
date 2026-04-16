@@ -1,136 +1,127 @@
-import os
 import requests
-import pandas as pd
-
+from abc import ABC, abstractmethod
 from datetime import datetime
-from configparser import ConfigParser
-from pathlib import Path
-from dotenv import load_dotenv
 
 
-# Load environment variables
-load_dotenv()
-DMI_URL = os.getenv('DMI_URL')
-SPAC_URL = os.getenv('SPAC_URL')
-TOKEN = os.getenv('SPAC_TOKEN')
+class BaseExtractor(ABC):
+    @abstractmethod
+    def extract(self) -> list[dict]: #TODO: not sure about return type. Should I make it dataframe instead?
+        pass
 
+    def save(self) -> None: # TODO: would it be nice to save json file?
+        pass
 
-def make_request(url: str, params: dict, headers: str=None):
-    '''
-    Submit GET request with url and parameters, and convert result to DataFrame
-    '''
-    timeout =  10 # seconds
+    def _make_request(self, url: str, params: dict, headers=None):
+        '''
+        Submit GET request with url and parameters, and convert result to DataFrame
+        
+        Args:
+            url
+            params
+            headers
+        '''
+        timeout =  10 # seconds
+
+        response = requests.get(url, params=params, headers=headers, timeout=timeout)
+        print('Fetching URL:', response.url)
+        response.raise_for_status()
+
+        return response.json()
+
+    def _construct_datetime_str(self, from_time: datetime=None, to_time: datetime=None) -> str:
+        '''
+        Convert datetime to ISO format string
+
+        Args:
+            from_time
+            to_time
+        '''
+        if from_time and to_time:
+            return f'{from_time.isoformat()}Z/{to_time.isoformat()}Z'
     
-    response = requests.get(url, params=params, headers=headers, timeout=timeout)
-    print('Fetching URL:', response.url)
-    response.raise_for_status()
-
-    return response.json()
+        elif from_time and not to_time:
+            return f'{from_time.isoformat()}Z'
     
-
-def construct_datetime_argument(from_time: datetime=None, to_time: datetime=None) -> str:
-    '''
-    Convert datetime to ISO format string
-    '''
-    if from_time and to_time:
-        return f'{from_time.isoformat()}Z/{to_time.isoformat()}Z'
-    
-    elif from_time and not to_time:
-        return f'{from_time.isoformat()}Z'
-    
-    elif not from_time and to_time:
-        return f'{to_time.isoformat()}Z'
-    
-    else: 
-        return None
+        elif not from_time and to_time:
+            return f'{to_time.isoformat()}Z'
 
 
-def get_stations(station_id: str=None) -> pd.DataFrame:
-    print('Extract')
+class StationExtractor(BaseExtractor):
+    def __init__(self, url, station_id: str=None):
+        self.url = url
+        self.station_id = station_id
 
-    # define query parameters for the request
-    query_params = {}
-    if station_id: query_params['stationId'] = station_id
+    def extract(self) -> list[dict]:
+        # define query parameters for the request
+        query_params = {}
+        if self.station_id: query_params['stationId'] = self.station_id
 
-    # url for stations
-    url = DMI_URL + '/station/items'
+        # url for stations
+        url = self.url + '/station/items'
 
-    # retrive data
-    response = make_request(url, query_params)
-    features = response['features']
-    
-    # add timestamp to features
-    features = [{**dic, 'extracted': response['timeStamp']} for dic in features]
-    
-    records = pd.json_normalize(features)
-    
-    if records.empty:
-        print('No data')
-
-    return records
-
-
-def get_observations(parameter: str, station_id: str, from_time: datetime, to_time: datetime, limit: int=5000) -> list[dict]:
-    print('Extract')
-
-    # define query parameters for the request
-    query_params = {
-        'datetime' : construct_datetime_argument(from_time=from_time, to_time=to_time),
-        'limit' : limit,  # maximum number of records to return
-        'offset': 0}
-    if parameter: query_params['parameterId'] = parameter
-    if station_id: query_params['stationId'] = station_id
-
-    # url for observations
-    url = DMI_URL + '/observation/items'
-
-    # retrieve data
-    data = []
-    while True:
-        response = make_request(url, query_params)
+        # retrive data
+        response = self._make_request(url, query_params)
         features = response['features']
 
         # add timestamp to features
-        features = [{**f, 'extracted': response['timeStamp']} for f in features]
+        features = [{**dic, 'extracted': response['timeStamp']} for dic in features]
 
-        data += features
-
-        number_returned = response['numberReturned']
-        if number_returned < limit:
-            break
-
-        url = response['links'][-1]['href']
-        query_params = {}
-
-    print('Records:', len(data))
-
-    return data
+        return features
 
 
-def get_spac(from_time: datetime=None, to_time: datetime=None, limit: int=5000):
-    print('Extract')
-    
-    # get authorization token from configuration file
-    config_file = Path(__file__).parents[1] / 'spac_config.ini'
-    config = ConfigParser()
+class ObservationExtractor(BaseExtractor):
+    def __init__(self, url: str, station_id: str, parameter: str, from_time: datetime, to_time: datetime, limit: int=5000):
+        self.url = url
+        self.station_id = station_id
+        self.parameter = parameter
+        self.from_time = from_time
+        self.to_time = to_time
+        self.limit = limit
 
-    if not config_file.exists():
-        raise FileNotFoundError(f"Configuration file '{config_file}' not found.")
-    else:
-        config.read(config_file)
-    
-    # define authorization token
-    headers = {'Authorization': f'Bearer {TOKEN}'}
+    def extract(self) -> list[dict]:
+        # define query parameters for the request
 
-    # define query parameters for the request
-    query_params = {}
-    if limit: query_params['limit'] = limit # maximum number of records to return
-    if from_time: query_params['from'] = construct_datetime_argument(from_time=from_time)
+        datetime_str = self._construct_datetime_str(self.from_time, self.to_time)
 
-    # retrieve data
-    response = make_request(SPAC_URL, query_params, headers)
-    records = pd.json_normalize(response['records'])
-    if records.empty:
-        print('No data')
+        query_params = {
+            'datetime' : datetime_str,
+            'limit' : self.limit,  # maximum number of records to return
+            'offset': 0}
+        
+        if self.parameter: query_params['parameterId'] = self.parameter
+        if self.station_id: query_params['stationId'] = self.station_id
 
-    return records
+        # url for observations
+        url = self.url + '/observation/items'
+
+        # retrieve data
+        data = []
+        while True:
+            response = self._make_request(url, query_params)
+            features = response['features']
+
+            # add timestamp to features
+            features = [{**f, 'extracted': response['timeStamp']} for f in features]
+
+            data += features
+
+            number_returned = response['numberReturned']
+            if number_returned < self.limit:
+                break
+
+            url = response['links'][-1]['href'] #TODO: offset kan maks være 500_000
+            query_params = {}
+
+        print('Records:', len(data))
+
+        return data
+
+
+class SpacExtractor(BaseExtractor):
+    def __init__(self, url):
+        self.url = url
+
+    def extract(self):
+        pass
+
+

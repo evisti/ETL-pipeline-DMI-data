@@ -1,107 +1,90 @@
 import pandas as pd
+from abc import ABC, abstractmethod
 
 
-def date_formatting(df: pd.DataFrame, columns_with_date: list[str]): 
-    # format date columns
-    df[columns_with_date] = df[columns_with_date].apply(pd.to_datetime)
+class BaseTransformer(ABC):
+    @abstractmethod
+    def transform(self, df: pd.DataFrame) -> None:
+        pass
+
+    def _date_formatting(self, df: pd.DataFrame, date_cols: str | list[str]) -> None:
+        df[date_cols] = df[date_cols].apply(pd.to_datetime)
+
+    def _drop_duplicates(self, df: pd.DataFrame, subset_cols: str | list[str]=None) -> None:
+        df.drop_duplicates(subset=subset_cols, inplace=True)
+
+    def _coordinate_formatting(self, df: pd.DataFrame, coordinate_col: str) -> None:
+        '''
+        Split coordinate_col into two new columns, latitude and longitude, and delete the original column.
+        '''
+        df['longitude'] = [coordinate[0] for coordinate in df[coordinate_col]]
+        df['latitude'] = [coordinate[1] for coordinate in df[coordinate_col]]
+        df.drop(columns=coordinate_col, inplace=True)
+    
+    def _reset_index(self, df: pd.DataFrame) -> None:
+        df.reset_index(drop=True, inplace=True)
 
 
-def drop_duplicates(df: pd.DataFrame, subset_name: str=None):
-    if subset_name: 
-        df.drop_duplicates(subset=[subset_name], inplace=True)
-    else:
-        df.drop_duplicates(inplace=True)
-
-
-def geo_coordinates(df: pd.DataFrame, column_with_coordinates: str):
-    # Split column_with_coordinates into two new columns (latitude and longitude), and delete the column_with_coordinates
-    df['longitude'] = [coordinate[0] for coordinate in df[column_with_coordinates]]
-    df['latitude'] = [coordinate[1] for coordinate in df[column_with_coordinates]]
-    df.drop(columns=column_with_coordinates, inplace=True)
-
-
-def reset_index(df: pd.DataFrame) -> pd.DataFrame:
-    df.reset_index(drop=True, inplace=True)
-    return df
-
-
-def clean_stations(df: pd.DataFrame):
-
-    print('Transform')
-
-    # change date columns dtype to datetime
-    columns_with_date = [
-        'properties.operationFrom', 
-        'properties.operationTo', 
-        'properties.created', 
-        'properties.validFrom', 
-        'properties.validTo'
+class StationTransformer(BaseTransformer):
+    def __init__(self):
+        pass
+    
+    def transform(self, df: pd.DataFrame) -> None:
+        # change date columns dtype
+        date_cols = [
+            'properties.operationFrom', 
+            'properties.operationTo', 
+            'properties.created', 
+            'properties.validFrom', 
+            'properties.validTo',
+            'extracted'
         ]
-    date_formatting(df, columns_with_date)
+        self._date_formatting(df, date_cols)
 
-    # latitude and longitude
-    geo_coordinates(df, 'geometry.coordinates')
+        # latitude and longitude
+        self._coordinate_formatting(df, 'geometry.coordinates')
 
-    # delete columns we don't want
-    df.drop(columns=['type', 'id', 'geometry.type', 'properties.updated'], inplace=True)
+        # delete columns we don't want
+        df.drop(columns=['type', 'id', 'geometry.type', 'properties.updated'], inplace=True)
 
-    # rename columns
-    df.rename(lambda s: s.replace('properties.', ''), axis="columns", inplace=True)
-    df.rename(columns={'parameterId': 'parameters'}, inplace=True)
+        # rename columns
+        df.rename(lambda s: s.replace('properties.', ''), axis="columns", inplace=True)
+        df.rename(columns={'parameterId': 'parameters'}, inplace=True)                       # TODO: consider better renaming
 
-    # TODO: Replace missing values?
-
-    print('Data info:')
-    df.info()
+        # TODO: Handle missing values
 
 
-def clean_observations(df: pd.DataFrame):
-
-    print('Transform')
+class ObservationTransformer(BaseTransformer):
+    def __init__(self):
+        pass
     
-    # reset index
-    reset_index(df)
+    def transform(self, df: pd.DataFrame) -> None:
+        self._reset_index(df)
 
-    # change date columns dtype to datetime
-    column_with_date = ['properties.observed', 'extracted']
-    date_formatting(df, column_with_date)
+        # change date columns dtype
+        date_cols = ['properties.observed', 'extracted']
+        self._date_formatting(df, date_cols)
 
-    # latitude and longitude
-    geo_coordinates(df, 'geometry.coordinates')
+        # latitude and longitude
+        self._coordinate_formatting(df, 'geometry.coordinates')
 
-    # delete columns we don't want
-    df.drop(columns=['type', 'id', 'geometry.type', 'properties.created'], inplace=True)
+        # delete columns we don't want
+        df.drop(columns=['type', 'id', 'geometry.type', 'properties.created'], inplace=True)
 
-    # rename columns
-    df.rename(lambda s: s.replace('properties.', ''), axis="columns", inplace=True)
-    df.rename(columns={'parameterId': 'parameter'}, inplace=True)
+        # rename columns
+        df.rename(lambda s: s.replace('properties.', ''), axis="columns", inplace=True)
+        df.rename(columns={'parameterId': 'parameter'}, inplace=True)                       # TODO: consider better renaming
 
-    # delete dupllicate rows
-    drop_duplicates(df)
+        # delete dupllicate rows
+        self._drop_duplicates(df)
 
-    print('Data info:')
-    df.info()
+        # TODO: Handle missing values
 
 
-def clean_spac(df: pd.DataFrame):
-
-    print('Transform')
+class SpacTransformer(BaseTransformer):
+    def __init__(self):
+        pass
     
-    # change date columns dtype to datetime
-    column_with_date = 'timestamp'
-    date_formatting(df, column_with_date)
+    def transform(self, df: pd.DataFrame) -> None:
+        pass
 
-    # calculate temperature in celsius from raw reading
-    df['DS18B20.temperature'] = df['reading.DS18B20.raw_reading'] / 1000 
-
-    # delete columns we don't want
-    df.drop(columns=['id', 'reading.DS18B20.device_name', 'reading.DS18B20.raw_reading'], inplace=True)
-
-    # rename columns
-    df.rename(lambda s: s.replace('reading.', ''), axis="columns", inplace=True)
-
-    # delete dupllicate rows
-    drop_duplicates(df)
-
-    print('Data info:')
-    df.info()

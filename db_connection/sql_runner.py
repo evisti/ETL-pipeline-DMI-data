@@ -1,17 +1,10 @@
 """Module for running SQL queries against a database using SQLAlchemy."""
-import os
 from pathlib import Path
 from typing import Any
-from dotenv import load_dotenv
 
-from sqlalchemy import Engine, Result, create_engine, text
+from sqlalchemy import Engine, Result, MetaData, create_engine, text
 from sqlalchemy.orm import sessionmaker
-
 from sqlalchemy_utils import database_exists, create_database
-
-
-load_dotenv()
-connection_string = os.getenv('DATABASE_URI')
 
 
 class SQLRunner:
@@ -24,7 +17,7 @@ class SQLRunner:
             engine (Engine): A SQLAlchemy Engine instance to connect to the database.
         """
         self.engine = engine
-        self.Session = sessionmaker(bind=self.engine)
+        self.Session = sessionmaker(self.engine)
 
     def run_query(self, query: str | Path) -> Result[Any]:
         """Run a SQL query and return the results.
@@ -45,38 +38,30 @@ class SQLRunner:
         with self.Session() as session:
             result = session.execute(text(query))
             return result
+        
+    def table_exists(table_name: str) -> bool: # TODO
+        pass
 
-    
-def get_engine() -> Engine:
-    """Create a SQLAlchemy engine based on the configuration file.
+    def create_tables(self, metadata: MetaData, drop_first: bool=True) -> None:
+        engine = self.runner.engine
+
+        if drop_first: 
+            self.drop_tables(metadata)
+
+        metadata.create_all(engine)
+
+        print('\nTables created:', end=' ')
+        print(*metadata.tables.keys(), sep=', ')
+
+    def drop_tables(self, metadata: MetaData) -> None:
+        metadata.drop_all(self.runner.engine)
+
+
+def get_engine(connection_string: str) -> Engine:
     """
- #   connection_string = _get_connection_string(config_file)
-
+    Create a SQLAlchemy engine
+    """
     if not database_exists(connection_string):
         create_database(connection_string)
 
     return create_engine(connection_string)
-
-
-'''
-def _get_connection_string(config_file: Path) -> str:
-    """Construct a database connection string from the configuration file.
-
-    Args:
-        config_file (Path): Path to the configuration file containing database connection details.
-    """
-    config = cp.ConfigParser()
-
-    if not config_file.exists():
-        raise FileNotFoundError(f"Configuration file '{config_file}' not found.")
-    else:
-        config.read(config_file)
-
-    user = config['DBCONFIG']['User']
-    password = config['DBCONFIG']['Password']
-    host = config['DBCONFIG']['Host']
-    port = config['DBCONFIG']['Port']
-    database = config['DBCONFIG']['Database']
-
-    return f'postgresql://{user}:{password}@{host}:{port}/{database}'
-'''
