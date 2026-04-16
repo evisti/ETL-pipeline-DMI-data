@@ -44,7 +44,7 @@ pipeline = ETLPipeline(
     transformer=ObservationTransformer(), 
     loader=Loader(sql_runner, table)
 )
-df = pipeline.dry_run()
+df = pipeline.run(dry_run=True)
 print(df.head())
 
 
