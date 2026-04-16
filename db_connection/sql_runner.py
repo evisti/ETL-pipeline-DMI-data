@@ -43,18 +43,16 @@ class SQLRunner:
         pass
 
     def create_tables(self, metadata: MetaData, drop_first: bool=True) -> None:
-        engine = self.runner.engine
-
         if drop_first: 
             self.drop_tables(metadata)
 
-        metadata.create_all(engine)
+        metadata.create_all(self.engine)
 
         print('\nTables created:', end=' ')
         print(*metadata.tables.keys(), sep=', ')
 
     def drop_tables(self, metadata: MetaData) -> None:
-        metadata.drop_all(self.runner.engine)
+        metadata.drop_all(self.engine)
 
 
 def get_engine(connection_string: str) -> Engine:

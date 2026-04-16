@@ -6,6 +6,7 @@ def station_table(metadata: MetaData, name='stations') -> Table:
     table = Table(
         name, metadata,
         Column('id', Integer, primary_key=True),
+        Column('extracted', DateTime),
         Column('owner', String(255)),
         Column('country', String(3)),
         Column('anemometerHeight', Float),

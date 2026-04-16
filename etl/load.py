@@ -10,7 +10,7 @@ class Loader():
 
     def load(self, df: pd.DataFrame, append: bool=True) -> None:
         if append:
-            df.index = df.index + self._get_max_id_in_table(self.table) + 1
+            df.index = df.index + self._get_max_id_in_table() + 1
     
         with self.runner.engine.begin() as connection:
             df.to_sql(

@@ -3,11 +3,9 @@ import pandas as pd
 
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
-from pathlib import Path
 from sqlalchemy import MetaData
 
 from db_connection import SQLRunner, get_engine
-from helper_functions import read_file, write_file
 
 from etl.extract import StationExtractor, ObservationExtractor
 from etl.transform import StationTransformer, ObservationTransformer
@@ -30,12 +28,16 @@ to_time = from_time + timedelta(days=5)
 station_id = '06072'
 parameters = None # all parameters
 
+# SQL connection
 sql_runner = SQLRunner(get_engine(DATABASE_URI))
+
+# SQL table metadata
 metadata = MetaData()
+ 
 
 
-'''
 table = observation_table(metadata, name='observation_test')
+#sql_runner.create_tables(metadata)
 
 pipeline = ETLPipeline(
     extractor=ObservationExtractor(DMI_URL, station_id, parameters, from_time, to_time), 
@@ -44,17 +46,18 @@ pipeline = ETLPipeline(
 )
 df = pipeline.dry_run()
 print(df.head())
+
+
 '''
-
-
 table = station_table(metadata, name='station_test')
-sql_runner.create_tables(metadata)
+#sql_runner.create_tables(metadata)
 
 pipeline = ETLPipeline(
     extractor=StationExtractor(DMI_URL), 
     transformer=StationTransformer(), 
     loader=Loader(sql_runner, table)
 )
-df = pipeline.dry_run()
+df = pipeline.run()
 print(df.head())
 print(df.info())
+'''

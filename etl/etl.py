@@ -1,10 +1,8 @@
 import pandas as pd
 
-from sqlalchemy import Table
-
-from etl.extractor import BaseExtractor
-from etl.transformer import BaseTransformer
-from etl.loader import Loader
+from etl.extract import BaseExtractor
+from etl.transform import BaseTransformer
+from etl.load import Loader
 
 
 class ETLPipeline():
@@ -13,7 +11,7 @@ class ETLPipeline():
         self.transformer = transformer
         self.loader = loader
 
-    def run(self, table: Table):
+    def run(self) -> pd.DataFrame:
         # Extract
         data = self.extractor.extract()
 
@@ -22,7 +20,9 @@ class ETLPipeline():
         self.transformer.transform(df)
         
         # Load
-        self.loader.load(df, table)
+        self.loader.load(df, append=True)
+
+        return df
 
     def dry_run(self) -> pd.DataFrame:
         # Extract
