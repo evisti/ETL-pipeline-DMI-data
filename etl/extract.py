@@ -1,6 +1,7 @@
 import requests
 from abc import ABC, abstractmethod
 from datetime import datetime
+from typing import Any
 
 
 class BaseExtractor(ABC):
@@ -15,13 +16,13 @@ class BaseExtractor(ABC):
         _construct_datetime_str: Helper method to format datetime parameters for API requests
     '''
     @abstractmethod
-    def extract(self) -> list[dict]: #TODO: not sure about return type. Should I make it dataframe instead?
+    def extract(self) -> list[dict[str, Any]]: #TODO: not sure about return type. Should I make it dataframe instead?
         pass
 
     def save(self) -> None: # TODO: would it be nice to save json file?
         pass
 
-    def _make_request(self, url: str, params: dict, headers=None):
+    def _make_request(self, url: str, params: dict[str, str | int], headers: dict[str, str] = None) -> dict[str, Any]:
         '''
         Submit GET request with url and parameters, and convert result to DataFrame
 
@@ -29,6 +30,12 @@ class BaseExtractor(ABC):
             url (str): API endpoint URL
             params (dict): Dictionary of query parameters for the request
             headers (dict, optional): Optional dictionary of HTTP headers to include in the request
+        
+        Returns:
+            dict: The JSON response from the API as a dictionary
+        
+        Raises:
+            requests.exceptions.RequestException: If the request fails due to network issues, invalid responses, or other HTTP errors
         '''
         timeout =  10 # seconds
 
@@ -38,7 +45,7 @@ class BaseExtractor(ABC):
 
         return response.json()
 
-    def _construct_datetime_str(self, from_time: datetime=None, to_time: datetime=None) -> str:
+    def _construct_datetime_str(self, from_time: datetime | None = None, to_time: datetime | None = None) -> str | None:
         '''
         Convert datetime to ISO format string
 
@@ -67,16 +74,16 @@ class StationExtractor(BaseExtractor):
     Methods:
         extract: Fetches station data from the DMI API and returns it as a list of dictionaries, including an extraction timestamp
     '''
-    def __init__(self, url, station_id: str=None):
+    def __init__(self, url: str, station_id: str | None = None):
         self.url = url
         self.station_id = station_id
 
-    def extract(self) -> list[dict]:
+    def extract(self) -> list[dict[str, Any]]:
         '''
         Fetches station data from the DMI API based on the specified station ID (if provided).
         
         Returns:
-            list[dict]: A list of dictionaries containing station data, each with an 'extracted' timestamp indicating when the data was retrieved from the API.
+            list[dict[str, Any]]: A list of dictionaries containing station data, each with an 'extracted' timestamp indicating when the data was retrieved from the API.
         '''
         # define query parameters for the request
         query_params = {}
@@ -110,7 +117,7 @@ class ObservationExtractor(BaseExtractor):
     Methods:
         extract: Fetches observation data from the DMI API and returns it as a list of dictionaries, including an extraction timestamp
     '''
-    def __init__(self, url: str, station_id: str, parameter: str, from_time: datetime, to_time: datetime, limit: int=5000):
+    def __init__(self, url: str, station_id: str | None, parameter: str | None, from_time: datetime, to_time: datetime, limit: int=5000):
         self.url = url
         self.station_id = station_id
         self.parameter = parameter
@@ -118,12 +125,12 @@ class ObservationExtractor(BaseExtractor):
         self.to_time = to_time
         self.limit = limit
 
-    def extract(self) -> list[dict]:
+    def extract(self) -> list[dict[str, Any]]:
         '''
         Fetches observation data from the DMI API based on the specified parameters and time range.
         
         Returns:
-            list[dict]: A list of dictionaries containing observation data, each with an 'extracted' timestamp indicating when the data was retrieved from the API.
+            list[dict[str, Any]]: A list of dictionaries containing observation data, each with an 'extracted' timestamp indicating when the data was retrieved from the API.
         '''
         # define query parameters for the request
 
