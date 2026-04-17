@@ -4,6 +4,16 @@ from datetime import datetime
 
 
 class BaseExtractor(ABC):
+    '''
+    Base class for data extractors. Defines common methods for making API requests.
+    Subclasses must implement the extract method to retrieve data from specific sources.
+    
+    Methods:
+        extract: Abstract method to be implemented by subclasses for data retrieval
+        save: Optional method to save extracted data, can be overridden by subclasses
+        _make_request: Helper method to perform GET requests and handle responses
+        _construct_datetime_str: Helper method to format datetime parameters for API requests
+    '''
     @abstractmethod
     def extract(self) -> list[dict]: #TODO: not sure about return type. Should I make it dataframe instead?
         pass
@@ -14,11 +24,11 @@ class BaseExtractor(ABC):
     def _make_request(self, url: str, params: dict, headers=None):
         '''
         Submit GET request with url and parameters, and convert result to DataFrame
-        
+
         Args:
-            url
-            params
-            headers
+            url (str): API endpoint URL
+            params (dict): Dictionary of query parameters for the request
+            headers (dict, optional): Optional dictionary of HTTP headers to include in the request
         '''
         timeout =  10 # seconds
 
@@ -33,8 +43,8 @@ class BaseExtractor(ABC):
         Convert datetime to ISO format string
 
         Args:
-            from_time
-            to_time
+            from_time (datetime, optional): The starting datetime for the query range
+            to_time (datetime, optional): The ending datetime for the query range
         '''
         if from_time and to_time:
             return f'{from_time.isoformat()}Z/{to_time.isoformat()}Z'
@@ -47,11 +57,27 @@ class BaseExtractor(ABC):
 
 
 class StationExtractor(BaseExtractor):
+    '''
+    Extractor for retrieving station data from the DMI API. Inherits from BaseExtractor and implements the extract method to fetch station information based on optional station ID.
+    
+    Args:
+        url (str): The base URL for the DMI API
+        station_id (str, optional): ID of the station to retrieve data for. If None, data for all stations will be retrieved.
+    
+    Methods:
+        extract: Fetches station data from the DMI API and returns it as a list of dictionaries, including an extraction timestamp
+    '''
     def __init__(self, url, station_id: str=None):
         self.url = url
         self.station_id = station_id
 
     def extract(self) -> list[dict]:
+        '''
+        Fetches station data from the DMI API based on the specified station ID (if provided).
+        
+        Returns:
+            list[dict]: A list of dictionaries containing station data, each with an 'extracted' timestamp indicating when the data was retrieved from the API.
+        '''
         # define query parameters for the request
         query_params = {}
         if self.station_id: query_params['stationId'] = self.station_id
@@ -70,6 +96,20 @@ class StationExtractor(BaseExtractor):
 
 
 class ObservationExtractor(BaseExtractor):
+    '''
+    Extractor for retrieving observation data from the DMI API. Inherits from BaseExtractor and implements the extract method to fetch observation data based on station ID, parameter, and time range.
+    
+    Args:
+        url (str): The base URL for the DMI API
+        station_id (str, optional): ID of the station to retrieve observations for. If None, data for all stations will be retrieved.
+        parameter (str, optional): Specific parameter to filter observations by (e.g., temperature, wind speed). If None, all parameters will be retrieved.
+        from_time (datetime): Starting datetime for the observation data retrieval range
+        to_time (datetime): Ending datetime for the observation data retrieval range
+        limit (int, optional): Maximum number of records to return per API request (default is 5000)
+        
+    Methods:
+        extract: Fetches observation data from the DMI API and returns it as a list of dictionaries, including an extraction timestamp
+    '''
     def __init__(self, url: str, station_id: str, parameter: str, from_time: datetime, to_time: datetime, limit: int=5000):
         self.url = url
         self.station_id = station_id
@@ -79,6 +119,12 @@ class ObservationExtractor(BaseExtractor):
         self.limit = limit
 
     def extract(self) -> list[dict]:
+        '''
+        Fetches observation data from the DMI API based on the specified parameters and time range.
+        
+        Returns:
+            list[dict]: A list of dictionaries containing observation data, each with an 'extracted' timestamp indicating when the data was retrieved from the API.
+        '''
         # define query parameters for the request
 
         datetime_str = self._construct_datetime_str(self.from_time, self.to_time)
