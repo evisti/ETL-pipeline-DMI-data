@@ -1,6 +1,0 @@
-pandas
-psycopg2
-requests
-SQLAlchemy
-SQLAlchemy-Utils
-python-dotenv
