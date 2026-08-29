@@ -36,7 +36,8 @@ class Loader():
                 con=connection, 
                 if_exists='append', 
                 index=True, 
-                index_label='id')
+                index_label='id'
+            )
     
     def _get_max_id_in_table(self) -> int:
         """ 

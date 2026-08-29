@@ -22,7 +22,11 @@ class BaseExtractor(ABC):
     def save(self) -> None: # TODO: save json file
         pass
 
-    def _make_request(self, url: str, params: dict[str, str | int], headers: dict[str, str] = None) -> dict[str, Any]:
+    def _make_request(self, 
+                      url: str, 
+                      params: dict[str, str | int], 
+                      headers: dict[str, str] = None
+                      ) -> dict[str, Any]:
         '''
         Submit GET request with url and parameters, and convert result to DataFrame
 
@@ -45,7 +49,9 @@ class BaseExtractor(ABC):
 
         return response.json()
 
-    def _construct_datetime_str(self, from_time: datetime | None = None, to_time: datetime | None = None) -> str | None:
+    def _construct_datetime_str(self, 
+                                from_time: datetime | None = None, 
+                                to_time: datetime | None = None) -> str | None:
         '''
         Convert datetime to ISO format string
 
