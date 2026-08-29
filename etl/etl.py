@@ -12,19 +12,19 @@ class ETLPipeline():
         self.loader = loader
 
     def run(self, dry_run: bool=False) -> pd.DataFrame:
-        # Extract
+        # extract
         data = self.extractor.extract()
 
-        # Transform
+        # transform
         df = pd.json_normalize(data)
         self.transformer.transform(df)
 
         if dry_run:
             return df
         
-         # TODO: Hvad sker der hvis transform returnerer en tom DataFrame? Bør load alligevel kaldes?
+         # TODO: What if transform returns an empty DataFrame? Should load still be called?
 
-        # Load
+        # load
         self.loader.load(df, append=True)
 
         return df

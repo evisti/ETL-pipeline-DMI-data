@@ -17,7 +17,7 @@ class Loader():
     """
     def __init__(self, runner: SQLRunner, table: Table):
         self.runner = runner
-        self.table = table # TODO: ved ikke om den hører til her eller om et andet sted er bedre
+        self.table = table # TODO: don't know if this belongs here or should rather be in a different place
 
     def load(self, df: pd.DataFrame, append: bool=True) -> None:
         """
@@ -39,7 +39,7 @@ class Loader():
                 index_label='id')
     
     def _get_max_id_in_table(self) -> int:
-        """
+        """ 
         Retrieves the maximum ID currently present in the target database table to ensure that new records are appended with unique IDs.
 
         Returns:
