@@ -18,9 +18,11 @@ from etl.tables import station_table, observation_table
 # Load environment variables
 load_dotenv()
 DMI_URL = os.getenv('DMI_URL')
-SPAC_URL = os.getenv('SPAC_URL')
-TOKEN = os.getenv('SPAC_TOKEN')
-DATABASE_URI = os.getenv('DATABASE_URI')
+USER = os.getenv('USER')
+PASSWORD = os.getenv('PASSWORD')
+HOST = os.getenv('HOST')
+PORT = os.getenv('PORT')
+DATABASE = os.getenv('DATABASE')
 
 # Parameter definitions
 from_time = datetime(2025, 1, 1)
@@ -29,35 +31,43 @@ station_id = '06072'
 parameters = None # all parameters
 
 # SQL connection
-sql_runner = SQLRunner(get_engine(DATABASE_URI))
+sql_runner = SQLRunner(get_engine(user=USER, password=PASSWORD, host=HOST, port=PORT, database=DATABASE))
 
 # SQL table metadata
 metadata = MetaData()
- 
 
 
-table = observation_table(metadata, name='observation_test')
-#sql_runner.create_tables(metadata)
+def run_etl_observations():
+    table = observation_table(metadata, name='observations')
+#    sql_runner.create_tables(metadata)
 
-pipeline = ETLPipeline(
-    extractor=ObservationExtractor(DMI_URL, station_id, parameters, from_time, to_time), 
-    transformer=ObservationTransformer(), 
-    loader=Loader(sql_runner, table)
-)
-df = pipeline.run(dry_run=True)
-print(df.head())
+    pipeline = ETLPipeline(
+        extractor=ObservationExtractor(DMI_URL, station_id, parameters, from_time, to_time), 
+        transformer=ObservationTransformer(), 
+        loader=Loader(sql_runner, table)
+    )
+    df = pipeline.run(dry_run=True)
+    print(df.head())
 
 
-'''
-table = station_table(metadata, name='station_test')
-#sql_runner.create_tables(metadata)
+def run_etl_stations():
 
-pipeline = ETLPipeline(
-    extractor=StationExtractor(DMI_URL), 
-    transformer=StationTransformer(), 
-    loader=Loader(sql_runner, table)
-)
-df = pipeline.run()
-print(df.head())
-print(df.info())
-'''
+    table = station_table(metadata, name='station_test')
+    #sql_runner.create_tables(metadata)
+
+    pipeline = ETLPipeline(
+        extractor=StationExtractor(DMI_URL), 
+        transformer=StationTransformer(), 
+        loader=Loader(sql_runner, table)
+    )
+    df = pipeline.run()
+    print(df.head())
+    print(df.info())
+
+
+def main():
+    pass
+
+
+if __name__=='__main__':
+    run_etl_observations()
