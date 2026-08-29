@@ -47,9 +47,10 @@ class StationTransformer(BaseTransformer):
         # delete columns we don't want
         df.drop(columns=['type', 'id', 'geometry.type', 'properties.updated'], inplace=True)
 
-        # rename columns
+        # TODO: consider better renaming
+        # rename columns 
         df.rename(lambda s: s.replace('properties.', ''), axis="columns", inplace=True)
-        df.rename(columns={'parameterId': 'parameters'}, inplace=True)                       # TODO: consider better renaming
+        df.rename(columns={'parameterId': 'parameters'}, inplace=True)
 
         # TODO: Handle missing values
 
@@ -71,20 +72,12 @@ class ObservationTransformer(BaseTransformer):
         # delete columns we don't want
         df.drop(columns=['type', 'id', 'geometry.type', 'properties.created'], inplace=True)
 
-        # rename columns
+        # TODO: consider better renaming
+        # rename columns 
         df.rename(lambda s: s.replace('properties.', ''), axis="columns", inplace=True)
-        df.rename(columns={'parameterId': 'parameter'}, inplace=True)                       # TODO: consider better renaming
+        df.rename(columns={'parameterId': 'parameter'}, inplace=True)
 
         # delete dupllicate rows
         self._drop_duplicates(df)
 
         # TODO: Handle missing values
-
-
-class SpacTransformer(BaseTransformer):
-    def __init__(self):
-        pass
-    
-    def transform(self, df: pd.DataFrame) -> None:
-        pass
-

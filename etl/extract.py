@@ -16,10 +16,10 @@ class BaseExtractor(ABC):
         _construct_datetime_str: Helper method to format datetime parameters for API requests
     '''
     @abstractmethod
-    def extract(self) -> list[dict[str, Any]]: #TODO: not sure about return type. Should I make it dataframe instead?
+    def extract(self) -> list[dict[str, Any]]: #TODO: not sure about return type. Should it be dataframe instead?
         pass
 
-    def save(self) -> None: # TODO: would it be nice to save json file?
+    def save(self) -> None: # TODO: save json file
         pass
 
     def _make_request(self, url: str, params: dict[str, str | int], headers: dict[str, str] = None) -> dict[str, Any]:
@@ -117,7 +117,13 @@ class ObservationExtractor(BaseExtractor):
     Methods:
         extract: Fetches observation data from the DMI API and returns it as a list of dictionaries, including an extraction timestamp
     '''
-    def __init__(self, url: str, station_id: str | None, parameter: str | None, from_time: datetime, to_time: datetime, limit: int=5000):
+    def __init__(self, 
+                 url: str, 
+                 station_id: str | None, 
+                 parameter: str | None, 
+                 from_time: datetime, 
+                 to_time: datetime, 
+                 limit: int=5000):
         self.url = url
         self.station_id = station_id
         self.parameter = parameter
@@ -162,19 +168,9 @@ class ObservationExtractor(BaseExtractor):
             if number_returned < self.limit:
                 break
 
-            url = response['links'][-1]['href'] #TODO: offset kan maks være 500_000
+            url = response['links'][-1]['href'] #TODO: max offset is 500_000. Make it work also beyond that.
             query_params = {}
 
         print('Records:', len(data))
 
         return data
-
-
-class SpacExtractor(BaseExtractor):
-    def __init__(self, url):
-        self.url = url
-
-    def extract(self):
-        pass
-
-

@@ -1,6 +1,7 @@
 from sqlalchemy import MetaData, Table, Column, Integer, String, Float, DateTime, ARRAY
 
-# TODO: look more into ORM
+# TODO: look more at ORM
+# TODO: look at Pydantic
 
 def station_table(metadata: MetaData, name='stations') -> Table:
     table = Table(
@@ -42,18 +43,5 @@ def observation_table(metadata: MetaData, name='observations') -> Table:
         Column('stationId', String(5)),
         Column('latitude', Float),
         Column('longitude', Float)
-    )
-    return table
-
-
-def spac_table(metadata: MetaData, name='spac') -> Table:
-    table = Table(
-        name, metadata,
-        Column('id', Integer, primary_key=True),
-        Column('timestamp', DateTime),
-        Column('BME280.humidity', Float),
-        Column('BME280.pressure', Float),
-        Column('BME280.temperature', Float),
-        Column('DS18B20.temperature', Float)
     )
     return table
