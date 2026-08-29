@@ -59,10 +59,12 @@ class SQLRunner:
         metadata.drop_all(self.engine)
 
 
-def get_engine(connection_string: str) -> Engine:
+def get_engine(user: str, password: str, host: str, port: str, database: str) -> Engine:
     '''
     Create a SQLAlchemy engine
     '''
+    connection_string = f'postgresql://{user}:{password}@{host}:{port}/{database}'
+
     if not database_exists(connection_string):
         create_database(connection_string)
 
