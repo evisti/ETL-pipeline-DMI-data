@@ -1,9 +1,10 @@
 from sqlalchemy import MetaData, Table, Column, Integer, String, Float, DateTime, ARRAY
 
-# TODO: look more at ORM
-# TODO: look at Pydantic
 
 def station_table(metadata: MetaData, name='stations') -> Table:
+    """
+    Define the station table structure
+    """
     table = Table(
         name, metadata,
         Column('id', Integer, primary_key=True),
@@ -31,8 +32,10 @@ def station_table(metadata: MetaData, name='stations') -> Table:
     )
     return table
 
-
 def observation_table(metadata: MetaData, name='observations') -> Table:
+    """
+    Define the observation table structure
+    """
     table = Table(
         name, metadata,
         Column('id', Integer, primary_key=True),

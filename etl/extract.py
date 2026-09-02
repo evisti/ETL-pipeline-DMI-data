@@ -5,7 +5,7 @@ from typing import Any
 
 
 class BaseExtractor(ABC):
-    '''
+    """
     Base class for data extractors. Defines common methods for making API requests.
     Subclasses must implement the extract method to retrieve data from specific sources.
     
@@ -14,7 +14,7 @@ class BaseExtractor(ABC):
         save: Optional method to save extracted data, can be overridden by subclasses
         _make_request: Helper method to perform GET requests and handle responses
         _construct_datetime_str: Helper method to format datetime parameters for API requests
-    '''
+    """
     @abstractmethod
     def extract(self) -> list[dict[str, Any]]: #TODO: not sure about return type. Should it be dataframe instead?
         pass
@@ -27,7 +27,7 @@ class BaseExtractor(ABC):
                       params: dict[str, str | int], 
                       headers: dict[str, str] = None
                       ) -> dict[str, Any]:
-        '''
+        """
         Submit GET request with url and parameters, and convert result to DataFrame
 
         Args:
@@ -40,25 +40,32 @@ class BaseExtractor(ABC):
         
         Raises:
             requests.exceptions.RequestException: If the request fails due to network issues, invalid responses, or other HTTP errors
-        '''
+        """
         timeout =  10 # seconds
 
-        response = requests.get(url, params=params, headers=headers, timeout=timeout)
+        response = requests.get(
+            url, 
+            params=params, 
+            headers=headers, 
+            timeout=timeout)
+        
         print('Fetching URL:', response.url)
+        
         response.raise_for_status()
 
         return response.json()
 
     def _construct_datetime_str(self, 
                                 from_time: datetime | None = None, 
-                                to_time: datetime | None = None) -> str | None:
-        '''
+                                to_time: datetime | None = None
+                                ) -> str | None:
+        """
         Convert datetime to ISO format string
 
         Args:
             from_time (datetime, optional): The starting datetime for the query range
             to_time (datetime, optional): The ending datetime for the query range
-        '''
+        """
         if from_time and to_time:
             return f'{from_time.isoformat()}Z/{to_time.isoformat()}Z'
     
@@ -68,10 +75,14 @@ class BaseExtractor(ABC):
         elif not from_time and to_time:
             return f'{to_time.isoformat()}Z'
 
+        else:
+            return None
+
 
 class StationExtractor(BaseExtractor):
-    '''
-    Extractor for retrieving station data from the DMI API. Inherits from BaseExtractor and implements the extract method to fetch station information based on optional station ID.
+    """
+    Extractor for retrieving station data from the DMI API. Inherits from BaseExtractor 
+    and implements the extract method to fetch station information based on optional station ID.
     
     Args:
         url (str): The base URL for the DMI API
@@ -79,18 +90,18 @@ class StationExtractor(BaseExtractor):
     
     Methods:
         extract: Fetches station data from the DMI API and returns it as a list of dictionaries, including an extraction timestamp
-    '''
+    """
     def __init__(self, url: str, station_id: str | None = None):
         self.url = url
-        self.station_id = station_id
+        self.station_id = station_id # TODO: check validity of station id
 
     def extract(self) -> list[dict[str, Any]]:
-        '''
+        """
         Fetches station data from the DMI API based on the specified station ID (if provided).
         
         Returns:
             list[dict[str, Any]]: A list of dictionaries containing station data, each with an 'extracted' timestamp indicating when the data was retrieved from the API.
-        '''
+        """
         # define query parameters for the request
         query_params = {}
         if self.station_id: query_params['stationId'] = self.station_id
@@ -109,8 +120,9 @@ class StationExtractor(BaseExtractor):
 
 
 class ObservationExtractor(BaseExtractor):
-    '''
-    Extractor for retrieving observation data from the DMI API. Inherits from BaseExtractor and implements the extract method to fetch observation data based on station ID, parameter, and time range.
+    """
+    Extractor for retrieving observation data from the DMI API. Inherits from BaseExtractor 
+    and implements the extract method to fetch observation data based on station ID, parameter, and time range.
     
     Args:
         url (str): The base URL for the DMI API
@@ -122,7 +134,7 @@ class ObservationExtractor(BaseExtractor):
         
     Methods:
         extract: Fetches observation data from the DMI API and returns it as a list of dictionaries, including an extraction timestamp
-    '''
+    """
     def __init__(self, 
                  url: str, 
                  station_id: str | None, 
@@ -131,28 +143,25 @@ class ObservationExtractor(BaseExtractor):
                  to_time: datetime, 
                  limit: int=5000):
         self.url = url
-        self.station_id = station_id
-        self.parameter = parameter
+        self.station_id = station_id # TODO: check validity of station id
+        self.parameter = parameter # TODO: check validity of parameter
         self.from_time = from_time
         self.to_time = to_time
         self.limit = limit
 
     def extract(self) -> list[dict[str, Any]]:
-        '''
+        """
         Fetches observation data from the DMI API based on the specified parameters and time range.
         
         Returns:
             list[dict[str, Any]]: A list of dictionaries containing observation data, each with an 'extracted' timestamp indicating when the data was retrieved from the API.
-        '''
+        """
         # define query parameters for the request
-
         datetime_str = self._construct_datetime_str(self.from_time, self.to_time)
-
         query_params = {
             'datetime' : datetime_str,
-            'limit' : self.limit,  # maximum number of records to return
+            'limit' : self.limit, # maximum number of records to return
             'offset': 0}
-        
         if self.parameter: query_params['parameterId'] = self.parameter
         if self.station_id: query_params['stationId'] = self.station_id
 

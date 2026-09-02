@@ -5,7 +5,8 @@ from db_connection import SQLRunner
 
 class Loader():
     """
-    Loader class responsible for loading transformed data into the target database table. It handles appending new records while ensuring unique IDs by retrieving the current maximum ID from the table.
+    Loader class responsible for loading transformed data into the target database table. 
+    It handles appending new records while ensuring unique IDs by retrieving the current maximum ID from the table.
     
     Args:
         runner (SQLRunner): An instance of SQLRunner to manage database connections and queries
@@ -27,9 +28,11 @@ class Loader():
             df (pd.DataFrame): The DataFrame containing the data to be loaded into the database
             append (bool, optional): If True, new records will be appended to the existing table with unique IDs. If False, the table will be overwritten. Default is True.
         """
+        # prevents ID collisions when appending new records
         if append:
             df.index = df.index + self._get_max_id_in_table() + 1
-    
+
+        # load the DataFrame into the database table
         with self.runner.engine.begin() as connection:
             df.to_sql(
                 name=self.table.name, 
