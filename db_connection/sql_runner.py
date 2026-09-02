@@ -1,4 +1,3 @@
-"""Module for running SQL queries against a database using SQLAlchemy."""
 from pathlib import Path
 from typing import Any
 
