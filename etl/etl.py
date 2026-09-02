@@ -35,16 +35,17 @@ class ETLPipeline():
         # extract
         data = self.extractor.extract()
 
-        # transform
         df = pd.json_normalize(data)
-        self.transformer.transform(df)
 
-        if dry_run:
+        if df.empty:
+            print('No data was extracted')
             return df
-        
-         # TODO: What if transform returns an empty DataFrame? Should load still be called?
 
+        # transform
+        self.transformer.transform(df)
+            
         # load
-        self.loader.load(df, append=True)
+        if not dry_run:
+            self.loader.load(df, append=True)
 
         return df
