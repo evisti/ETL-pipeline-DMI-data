@@ -1,5 +1,6 @@
 import pandas as pd
 from sqlalchemy import Table
+
 from db_connection import SQLRunner
 
 
@@ -8,13 +9,12 @@ class Loader():
     Loader class responsible for loading transformed data into the target database table. 
     It handles appending new records while ensuring unique IDs by retrieving the current maximum ID from the table.
     
-    Args:
+    Attributes:
         runner (SQLRunner): An instance of SQLRunner to manage database connections and queries
         table (Table): The SQLAlchemy Table object representing the target database table for loading data
 
     Methods:
         load: Loads a DataFrame into the database table, appending new records with unique IDs
-        _get_max_id_in_table: Retrieves the maximum ID currently present in the target database table
     """
     def __init__(self, runner: SQLRunner, table: Table):
         self.runner = runner
@@ -24,7 +24,7 @@ class Loader():
         """
         Loads a DataFrame into the target database table, appending new records with unique IDs if specified.
 
-        Args:
+        Parameters:
             df (pd.DataFrame): The DataFrame containing the data to be loaded into the database
             append (bool, optional): If True, new records will be appended to the existing table with unique IDs. If False, the table will be overwritten. Default is True.
         """

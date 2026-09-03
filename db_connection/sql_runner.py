@@ -9,14 +9,24 @@ from sqlalchemy_utils import database_exists, create_database
 class SQLRunner:
     """
     Run SQL queries against a given database engine and manage database tables.
+
+    Attributes:
+        engine (Engine): A SQLAlchemy Engine instance for database connection
+        Session (sessionmaker): A SQLAlchemy sessionmaker for creating sessions to interact with the database
+    
+    Methods:
+        run_query: Executes a SQL query and returns the results
+        table_exists: Checks if a specified table exists in the database
+        create_tables: Creates tables defined in a SQLAlchemy MetaData object, with an option to drop existing tables first
+        drop_tables: Drops tables defined in a SQLAlchemy MetaData object from the database
     """
 
     def __init__(self, engine: Engine):
         """
         Initialize the SQLRunner with a SQLAlchemy engine for database connection.
 
-        Args:
-            engine (Engine): A SQLAlchemy Engine instance to connect to the database.
+        Parameters:
+            engine (Engine): A SQLAlchemy Engine instance to connect to the database
         """
         self.engine = engine
         self.Session = sessionmaker(self.engine)
@@ -25,14 +35,15 @@ class SQLRunner:
         """
         Run a SQL query and return the results.
 
-        Args:
+        Parameters:
             query (str|Path): A SQL query as a string or a Path to a file containing the SQL query.
+
+        Returns:
+            Result[Any]: The result of the executed SQL query.
 
         Raises:
             FileNotFoundError: If the query is provided as a Path and the file does not exist.
         
-        Returns:
-            Result[Any]: The result of the executed SQL query.
         """
         if isinstance(query, Path):
             if not query.exists():
@@ -49,7 +60,7 @@ class SQLRunner:
         """
         Check if a table exists in the database.
 
-        Args:
+        Parameters:
             table_name (str): The name of the table to check.
 
         Returns:
@@ -61,7 +72,7 @@ class SQLRunner:
         """
         Create all tables defined in the provided SQLAlchemy MetaData object in the database. Optionally drop existing tables first.
         
-        Args:
+        Parameters:
             metadata (MetaData): A SQLAlchemy MetaData object containing table definitions to be created.
             drop_first (bool): If True, drop existing tables before creating new ones. Defaults to False.
         """
@@ -77,7 +88,7 @@ class SQLRunner:
         """
         Drop all tables defined in the provided SQLAlchemy MetaData object from the database.
 
-        Args:
+        Parameters:
             metadata (MetaData): A SQLAlchemy MetaData object containing table definitions to be dropped.
         """
         metadata.drop_all(self.engine)
@@ -87,7 +98,7 @@ def get_engine(user: str, password: str, host: str, port: str, database: str) ->
     """
     Create a SQLAlchemy engine for connecting to a PostgreSQL database. If the database does not exist, it will be created.
 
-    Args:
+    Parameters:
         user (str): Database username
         password (str): Database password
         host (str): Database host address

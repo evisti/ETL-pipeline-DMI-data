@@ -10,18 +10,18 @@ class BaseExtractor(ABC):
     """
     Base class for data extractors. Defines common methods for making API requests.
     Subclasses must implement the extract method to retrieve data from specific sources.
-    
-    Methods:
-        extract: Abstract method to be implemented by subclasses for data retrieval
-        save: Optional method to save extracted data, can be overridden by subclasses
-        _make_request: Helper method to perform GET requests and handle responses
-        _construct_datetime_str: Helper method to format datetime parameters for API requests
     """
     @abstractmethod
     def extract(self) -> list[dict[str, Any]]: #TODO: not sure about return type. Should it be dataframe instead?
+        """
+        Abstract method to be implemented by subclasses for data retrieval.
+        """
         pass
 
     def save(self) -> None: # TODO: save json file
+        """
+        Optional method to save extracted data, can be overridden by subclasses.
+        """
         pass
 
     def _make_request(self, 
@@ -30,9 +30,9 @@ class BaseExtractor(ABC):
                       headers: dict[str, str] = None
                       ) -> dict[str, Any]:
         """
-        Submit GET request with url and parameters, and convert result to DataFrame
+        Helper method to perform GET requests and handle responses. Submit GET request with url and parameters, and convert result to DataFrame.
 
-        Args:
+        Parameters:
             url (str): API endpoint URL
             params (dict): Dictionary of query parameters for the request
             headers (dict, optional): Optional dictionary of HTTP headers to include in the request
@@ -62,11 +62,14 @@ class BaseExtractor(ABC):
                                 to_time: datetime | None = None
                                 ) -> str | None:
         """
-        Convert datetime to ISO format string
+        Helper method to format datetime parameters for API requests. Converts datetime objects to ISO format strings. 
 
-        Args:
+        Parameters:
             from_time (datetime, optional): The starting datetime for the query range
             to_time (datetime, optional): The ending datetime for the query range
+        
+        Returns:
+            str: datetime in ISO format
         """
         if from_time and to_time:
             return f'{from_time.isoformat()}Z/{to_time.isoformat()}Z'
@@ -83,10 +86,9 @@ class BaseExtractor(ABC):
 
 class StationExtractor(BaseExtractor):
     """
-    Extractor for retrieving station data from the DMI API. Inherits from BaseExtractor 
-    and implements the extract method to fetch station information based on optional station ID.
+    Extractor for retrieving station data from the DMI API. Inherits from BaseExtractor and implements the extract method to fetch station information based on optional station ID.
     
-    Args:
+    Attributes:
         url (str): The base URL for the DMI API
         station_id (str, optional): ID of the station to retrieve data for. If None, data for all stations will be retrieved.
     
@@ -131,7 +133,7 @@ class ObservationExtractor(BaseExtractor):
     Extractor for retrieving observation data from the DMI API. Inherits from BaseExtractor 
     and implements the extract method to fetch observation data based on station ID, parameter, and time range.
     
-    Args:
+    Attributes:
         url (str): The base URL for the DMI API
         station_id (str, optional): ID of the station to retrieve observations for. If None, data for all stations will be retrieved.
         parameter (str, optional): Specific parameter to filter observations by (e.g., temperature, wind speed). If None, all parameters will be retrieved.
@@ -144,11 +146,11 @@ class ObservationExtractor(BaseExtractor):
     """
     def __init__(self, 
                  url: str, 
-                 station_id: str | None, 
-                 parameter: str | None, 
                  from_time: datetime, 
                  to_time: datetime, 
-                 limit: int=5000):
+                 station_id: str | None, 
+                 parameter: str | None = None, 
+                 limit: int = 5000):
         self.url = url
         self.station_id = station_id
         self.parameter = parameter

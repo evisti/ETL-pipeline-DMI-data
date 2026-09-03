@@ -3,15 +3,22 @@ from abc import ABC, abstractmethod
 
 
 class BaseTransformer(ABC):
+    """
+    Base class for data transformers. Defines common methods for making data transformations.
+    Subclasses must implement the transform method.
+    """
     @abstractmethod
     def transform(self, df: pd.DataFrame) -> None:
+        """
+        Abstract method to be implemented by subclasses for data transformation. 
+        """
         pass
 
     def _date_formatting(self, df: pd.DataFrame, date_cols: str | list[str]) -> None:
         """
         Format specified columns as datetime.
 
-        Args:
+        Parameters:
             df (pd.DataFrame): The DataFrame containing the data to be transformed
             date_cols (str | list[str]): Column name(s) to be formatted as datetime
         """
@@ -21,7 +28,7 @@ class BaseTransformer(ABC):
         """
         Drop duplicate rows from the DataFrame based on specified columns.
 
-        Args:
+        Parameters:
             df (pd.DataFrame): The DataFrame containing the data to be transformed
             subset_cols (str | list[str], optional): Column name(s) to consider for identifying duplicates. If None, all columns are considered. Defaults to None.
         """
@@ -31,7 +38,7 @@ class BaseTransformer(ABC):
         """
         Format a column containing coordinate pairs into separate longitude and latitude columns. 
 
-        Args:
+        Parameters:
             df (pd.DataFrame): The DataFrame containing the data to be transformed
             coordinate_col (str): The name of the column containing coordinate pairs (as lists or tuples of [longitude, latitude])
         """
@@ -55,6 +62,12 @@ class StationTransformer(BaseTransformer):
         pass
     
     def transform(self, df: pd.DataFrame) -> None:
+        """
+        Transforms the input DataFrame in place, modifying it to match the desired schema for station data.
+
+        Parameters:
+            df (pd.DataFrame): The DataFrame containing the station data to be transformed
+        """
         # change date columns dtype
         date_cols = [
             'properties.operationFrom', 
@@ -91,6 +104,12 @@ class ObservationTransformer(BaseTransformer):
         pass
     
     def transform(self, df: pd.DataFrame) -> None:
+        """
+        Transforms the input DataFrame in place, modifying it to match the desired schema for observation data.
+
+        Parameters:
+            df (pd.DataFrame): The DataFrame containing the observation data to be transformed
+        """
         self._reset_index(df)
 
         # change date columns dtype
