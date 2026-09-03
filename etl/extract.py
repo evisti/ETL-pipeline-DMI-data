@@ -3,6 +3,8 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Any
 
+from etl.utils import _check_param_validity
+
 
 class BaseExtractor(ABC):
     """
@@ -93,7 +95,12 @@ class StationExtractor(BaseExtractor):
     """
     def __init__(self, url: str, station_id: str | None = None):
         self.url = url
-        self.station_id = station_id # TODO: check validity of station id
+        self.station_id = station_id
+
+        # check validity of station_id
+        if self.station_id is not None:
+            _check_param_validity('stations', self.station_id)
+
 
     def extract(self) -> list[dict[str, Any]]:
         """
@@ -143,11 +150,17 @@ class ObservationExtractor(BaseExtractor):
                  to_time: datetime, 
                  limit: int=5000):
         self.url = url
-        self.station_id = station_id # TODO: check validity of station id
-        self.parameter = parameter # TODO: check validity of parameter
+        self.station_id = station_id
+        self.parameter = parameter
         self.from_time = from_time
         self.to_time = to_time
         self.limit = limit
+
+        # check validity of station_id and parameter
+        if self.station_id is not None:
+            _check_param_validity('stations', self.station_id)
+        if self.parameter is not None:
+            _check_param_validity('observations', self.parameter)
 
     def extract(self) -> list[dict[str, Any]]:
         """
