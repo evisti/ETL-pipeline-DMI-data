@@ -10,3 +10,8 @@ The project uses Python to assemble data into a Pandas dataframe and store into 
 The DMI observation data are time-resolved raw data collected at DMI's observation stations in Denmark and Greenland. 
 It contains a number of parameters (temperature, humidity, wind, radiation, etc.)
 
+
+### Configure environment variables
+
+Provide your PostgreSQL connection details (USER, PASSWORD, HOST, PORT, DATABASE)
+as well as the URL for the DMI API (DMI\_URL). 
