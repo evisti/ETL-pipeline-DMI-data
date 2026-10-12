@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import Any
 
@@ -94,7 +95,7 @@ class SQLRunner:
         metadata.drop_all(self.engine)
 
 
-def get_engine(user: str, password: str, host: str, port: str, database: str) -> Engine:
+def get_engine() -> Engine:
     """
     Create a SQLAlchemy engine for connecting to a PostgreSQL database. If the database does not exist, it will be created.
 
@@ -108,7 +109,14 @@ def get_engine(user: str, password: str, host: str, port: str, database: str) ->
     Returns:
         Engine: A SQLAlchemy Engine instance connected to the specified database.
     """
-    connection_string = f'postgresql://{user}:{password}@{host}:{port}/{database}'
+    # Load database environment variables
+    USER = os.getenv('USER')
+    PASSWORD = os.getenv('PASSWORD')
+    HOST = os.getenv('HOST')
+    PORT = os.getenv('PORT')
+    DATABASE = os.getenv('DATABASE')
+
+    connection_string = f'postgresql://{USER}:{PASSWORD}@{HOST}:{PORT}/{DATABASE}'
 
     if not database_exists(connection_string):
         create_database(connection_string)
